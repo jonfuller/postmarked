@@ -7,11 +7,6 @@ class PostmarkedApp < Sinatra::Base
     content_type 'application/json'
   end
 
-  get '/raw' do
-    #TODO
-    200
-  end
-
   post '/push' do
     conn = Mongo::Connection.from_uri(ENV['MONGOHQ_URL'])
     uri = URI.parse(ENV['MONGOHQ_URL'])
@@ -27,8 +22,19 @@ class PostmarkedApp < Sinatra::Base
   end
 
   post '/pop' do
-    #TODO
-    200
+    conn = Mongo::Connection.from_uri(ENV['MONGOHQ_URL'])
+    uri = URI.parse(ENV['MONGOHQ_URL'])
+    db = conn.db(uri.path.gsub(/^\//, ''))
+
+    return 400 unless params.has_key? 'app_key'
+
+    doc = db['postmarked'].find_and_modify({
+      :remove => true,
+      :query => {'app_key' => params[:app_key]}})
+
+    return 404 unless doc
+
+    doc['email']
   end
 
   post '/apps' do
